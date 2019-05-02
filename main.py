@@ -1,6 +1,8 @@
 import os
+import json
 
 import giturlparse
+import tableschema
 from semver import VersionInfo
 from git import Repo as GitRepo
 
@@ -11,6 +13,10 @@ class ValidationException(Exception):
             message = "An error occured with repo: %s" % repo
         super(ValidationException, self).__init__(message)
         self.repo = repo
+
+
+class GitException(ValidationException):
+    pass
 
 
 class NoTagsException(ValidationException):
@@ -25,13 +31,63 @@ class InvalidVersionException(ValidationException):
     pass
 
 
+class InvalidSchemaException(ValidationException):
+    pass
+
+
 class TableSchemaValidator(object):
+    SCHEMA_FILENAME = "schema.json"
+
     def __init__(self, repo):
         super(TableSchemaValidator, self).__init__()
         self.repo = repo
+        self.git_repo = repo.git_repo
 
-    def validate():
-        pass
+    def validate(self):
+        self.check_file_exists("README.md")
+        self.check_file_exists(self.SCHEMA_FILENAME)
+        self.check_schema(self.SCHEMA_FILENAME)
+        self.check_extra_keys(self.SCHEMA_FILENAME)
+
+    def check_extra_keys(self, filename):
+        with open(self.filepath(filename)) as file:
+            json_data = json.load(file)
+
+        keys = [
+            "title",
+            "description",
+            "author",
+            "contact",
+            "version",
+            "created_at",
+            "updated_at",
+            "homepage",
+        ]
+        for key in [k for k in keys if k not in json_data]:
+            message = "Key `%s` is a required key and is missing from %s" % (
+                key,
+                filename,
+            )
+            raise InvalidSchemaException(self.repo, message)
+
+    def check_schema(self, filename):
+        try:
+            tableschema.validate(self.filepath(filename))
+        except tableschema.exceptions.ValidationError as e:
+            errors = "; ".join(e.errors)
+            message = "Schema %s is not a valid TableSchema schema. Errors: %s" % (
+                filename,
+                errors,
+            )
+            raise InvalidSchemaException(self.repo, message)
+
+    def check_file_exists(self, filename):
+        if not os.path.isfile(self.filepath(filename)):
+            message = "Required file %s was not found" % filename
+            raise MissingFileException(self.repo, message)
+
+    def filepath(self, filename):
+        return os.path.join(self.git_repo.working_dir, filename)
 
 
 class Repo(object):
@@ -39,7 +95,7 @@ class Repo(object):
         super(Repo, self).__init__()
         parsed_git = giturlparse.parse(git_url)
         self.git_url = git_url
-        self.repo = None
+        self.git_repo = None
         self.owner = parsed_git.owner
         self.name = parsed_git.name
 
@@ -57,34 +113,34 @@ class Repo(object):
         return "%s/%s" % (self.owner, self.name)
 
     def clone_or_pull(self):
-        if os.path.isdir(self.clone_dir):
-            print("pull")
-            git_repo = GitRepo(self.clone_dir)
-            git_repo.remotes.origin.pull("refs/heads/master:refs/heads/origin")
-        else:
-            print("clone")
-            git_repo = GitRepo.clone_from(self.git_url, self.clone_dir)
+        try:
+            if os.path.isdir(self.clone_dir):
+                git_repo = GitRepo(self.clone_dir)
+                git_repo.remotes.origin.pull("refs/heads/master:refs/heads/origin")
+            else:
+                git_repo = GitRepo.clone_from(self.git_url, self.clone_dir)
+        except Exception:
+            raise GitException(self, "Cannot clone or pull Git repository")
 
-        self.repo = git_repo
+        self.git_repo = git_repo
 
     def tags(self):
-        if len(self.repo.tags) == 0:
-            raise NoTagsException(self.repo)
-        return [self.parse_version(t.name) for t in self.repo.tags]
+        if len(self.git_repo.tags) == 0:
+            raise NoTagsException(self)
+        return [self.parse_version(t.name) for t in self.git_repo.tags]
 
     def checkout_tag(self, tag):
-        self.repo.git.checkout(tag)
+        self.git_repo.git.checkout(tag)
 
     def parse_version(self, version):
         try:
             return VersionInfo.parse(version.replace("v", ""))
         except ValueError:
-            raise InvalidVersionException(
-                self.repo, "Version was invalid: %s" % version
-            )
+            raise InvalidVersionException(self, "Version was invalid: %s" % version)
 
 
 git_url = "https://github.com/AntoineAugusti/test-schema.git"
 repo = Repo(git_url)
 repo.clone_or_pull()
 print(repo.tags(), repo.slug)
+TableSchemaValidator(repo).validate()

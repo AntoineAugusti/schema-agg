@@ -1,3 +1,4 @@
 GitPython==2.1.11
 git-url-parse==1.2.2
 semver==2.8.1
+tableschema==1.4.1
