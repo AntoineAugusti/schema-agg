@@ -13,6 +13,7 @@ class ValidationException(Exception):
             message = "An error occured with repo: %s" % repo
         super(ValidationException, self).__init__(message)
         self.repo = repo
+        self.tag = repo.current_tag
 
 
 class GitException(ValidationException):
@@ -47,11 +48,20 @@ class TableSchemaValidator(object):
         self.check_file_exists("README.md")
         self.check_file_exists(self.SCHEMA_FILENAME)
         self.check_schema(self.SCHEMA_FILENAME)
-        self.check_extra_keys(self.SCHEMA_FILENAME)
+        # self.check_extra_keys(self.SCHEMA_FILENAME)
+
+    def extract(self):
+        return {
+            "slug": self.repo.slug,
+            "tag": str(self.repo.current_tag),
+            "schema": self.file_content(self.SCHEMA_FILENAME),
+            "readme": self.file_content("README.md"),
+            "changelog": self.file_content("CHANGELOG.md"),
+        }
 
     def check_extra_keys(self, filename):
-        with open(self.filepath(filename)) as file:
-            json_data = json.load(file)
+        with open(self.filepath(filename)) as f:
+            json_data = json.load(f)
 
         keys = [
             "title",
@@ -86,6 +96,13 @@ class TableSchemaValidator(object):
             message = "Required file %s was not found" % filename
             raise MissingFileException(self.repo, message)
 
+    def file_content(self, filename):
+        if not os.path.isfile(self.filepath(filename)):
+            return None
+
+        with open(self.filepath(filename), "r") as f:
+            return f.read()
+
     def filepath(self, filename):
         return os.path.join(self.git_repo.working_dir, filename)
 
@@ -98,6 +115,7 @@ class Repo(object):
         self.git_repo = None
         self.owner = parsed_git.owner
         self.name = parsed_git.name
+        self.current_tag = None
 
     @property
     def clone_dir(self):
@@ -130,7 +148,11 @@ class Repo(object):
         return [self.parse_version(t.name) for t in self.git_repo.tags]
 
     def checkout_tag(self, tag):
-        self.git_repo.git.checkout(tag)
+        try:
+            self.git_repo.git.checkout(tag)
+        except Exception:
+            raise GitException(self, "Cannot checkout tag %s" % tag)
+        self.current_tag = tag
 
     def parse_version(self, version):
         try:
@@ -143,4 +165,7 @@ git_url = "https://github.com/AntoineAugusti/test-schema.git"
 repo = Repo(git_url)
 repo.clone_or_pull()
 print(repo.tags(), repo.slug)
-TableSchemaValidator(repo).validate()
+for tag in repo.tags():
+    repo.checkout_tag(tag)
+    TableSchemaValidator(repo).validate()
+    print(TableSchemaValidator(repo).extract())
