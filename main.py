@@ -84,10 +84,16 @@ class Repo(object):
 
     def checkout_tag(self, tag):
         try:
-            self.git_repo.git.checkout(tag)
+            self.git_repo.git.checkout(self.normalize_tag(tag))
         except GitError:
             raise exceptions.GitException(self, "Cannot checkout tag %s" % tag)
         self.current_tag = tag
+
+    def normalize_tag(self, tag):
+        tag_name = str(tag)
+        if str(tag) not in list(map(str, self.git_repo.tags)):
+            tag_name = "v" + str(tag)
+        return tag_name
 
     def parse_version(self, version):
         try:
