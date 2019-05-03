@@ -34,10 +34,10 @@ class Repo(object):
         super(Repo, self).__init__()
         parsed_git = giturlparse.parse(git_url)
         self.git_url = git_url
-        self.email = email
-        self.git_repo = None
         self.owner = parsed_git.owner
         self.name = parsed_git.name
+        self.email = email
+        self.git_repo = None
         self.current_tag = None
         if schema_type not in self.SCHEMA_TYPES:
             raise exceptions.InvalidSchemaTypeException(
@@ -59,6 +59,11 @@ class Repo(object):
     @property
     def slug(self):
         return "%s/%s" % (self.owner, self.name)
+
+    def validator(self):
+        if self.schema_type == "tableschema":
+            return TableSchemaValidator(self)
+        raise NotImplementedError
 
     def clone_or_pull(self):
         try:
@@ -116,8 +121,8 @@ for repertoire_slug, conf in config.items():
     for tag in tags:
         try:
             repo.checkout_tag(tag)
-            TableSchemaValidator(repo).validate()
-            TableSchemaValidator(repo).extract()
+            repo.validator().validate()
+            repo.validator().extract()
         except exceptions.ValidationException as e:
             errors.add(e)
 

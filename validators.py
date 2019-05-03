@@ -6,13 +6,25 @@ import tableschema
 import exceptions
 
 
-class TableSchemaValidator(object):
-    SCHEMA_FILENAME = "schema.json"
-
+class BaseValidator(object):
     def __init__(self, repo):
-        super(TableSchemaValidator, self).__init__()
+        super(BaseValidator, self).__init__()
         self.repo = repo
         self.git_repo = repo.git_repo
+
+    def validate(self):
+        self.check_file_exists("README.md")
+
+    def extract(self):
+        raise NotImplementedError
+
+    def move_files(self, files):
+        if not os.path.exists(self.target_dir):
+            os.makedirs(self.target_dir)
+
+        for filename, src_filepath in files.items():
+            if src_filepath is not None:
+                shutil.copyfile(src_filepath, self.target_filepath(filename))
 
     @property
     def data_dir(self):
@@ -24,8 +36,32 @@ class TableSchemaValidator(object):
         tag = str(self.repo.current_tag)
         return os.path.join(self.data_dir, self.repo.slug, tag)
 
+    def check_file_exists(self, filename):
+        if not os.path.isfile(self.filepath(filename)):
+            message = "Required file %s was not found" % filename
+            raise exceptions.MissingFileException(self.repo, message)
+
+    def filepath_or_none(self, filename):
+        if not os.path.isfile(self.filepath(filename)):
+            return None
+
+        return self.filepath(filename)
+
+    def target_filepath(self, filename):
+        return os.path.join(self.target_dir, filename)
+
+    def filepath(self, filename):
+        return os.path.join(self.git_repo.working_dir, filename)
+
+
+class TableSchemaValidator(BaseValidator):
+    SCHEMA_FILENAME = "schema.json"
+
+    def __init__(self, repo):
+        super(TableSchemaValidator, self).__init__(repo)
+
     def validate(self):
-        self.check_file_exists("README.md")
+        super(TableSchemaValidator, self).validate()
         self.check_file_exists(self.SCHEMA_FILENAME)
         self.check_schema(self.SCHEMA_FILENAME)
         self.check_extra_keys(self.SCHEMA_FILENAME)
@@ -36,13 +72,7 @@ class TableSchemaValidator(object):
             "README.md": self.filepath_or_none("README.md"),
             "CHANGELOG.md": self.filepath_or_none("CHANGELOG.md"),
         }
-
-        if not os.path.exists(self.target_dir):
-            os.makedirs(self.target_dir)
-
-        for filename, src_filepath in files.items():
-            if src_filepath is not None:
-                shutil.copyfile(src_filepath, self.target_filepath(filename))
+        self.move_files(files)
 
     def check_extra_keys(self, filename):
         with open(self.filepath(filename)) as f:
@@ -75,20 +105,3 @@ class TableSchemaValidator(object):
                 errors,
             )
             raise exceptions.InvalidSchemaException(self.repo, message)
-
-    def check_file_exists(self, filename):
-        if not os.path.isfile(self.filepath(filename)):
-            message = "Required file %s was not found" % filename
-            raise exceptions.MissingFileException(self.repo, message)
-
-    def filepath_or_none(self, filename):
-        if not os.path.isfile(self.filepath(filename)):
-            return None
-
-        return self.filepath(filename)
-
-    def target_filepath(self, filename):
-        return os.path.join(self.target_dir, filename)
-
-    def filepath(self, filename):
-        return os.path.join(self.git_repo.working_dir, filename)
