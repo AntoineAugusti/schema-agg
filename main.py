@@ -108,11 +108,6 @@ for repertoire_slug, conf in config.items():
     try:
         repo = Repo(conf["url"], conf["email"], conf["type"])
         repo.clone_or_pull()
-    except exceptions.ValidationException as e:
-        errors.add(e)
-        continue
-
-    try:
         tags = repo.tags()
     except exceptions.ValidationException as e:
         errors.add(e)
@@ -126,5 +121,10 @@ for repertoire_slug, conf in config.items():
         except exceptions.ValidationException as e:
             errors.add(e)
 
-print(errors.errors_by_slug)
-print(errors.errors_by_email)
+for slug, details in errors.errors_by_slug.items():
+    messages = "\n".join(["  - " + repr(e) for e in details])
+    print("%s:\n%s" % (slug, messages))
+
+for email, details in errors.errors_by_email.items():
+    messages = "\n".join(["  - " + repr(e) for e in details])
+    print("%s:\n%s" % (email, messages))

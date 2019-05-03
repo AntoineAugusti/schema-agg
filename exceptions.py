@@ -9,7 +9,11 @@ class ValidationException(Exception):
             message = "[repo `%s` tag `%s`]: %s" % (repo.slug, tag, message)
         else:
             message = "[repo `%s` no tag]: %s" % (repo.slug, message)
+        self.message = message
         super(ValidationException, self).__init__(message)
+
+    def __repr__(self):
+        return "%s: %s" % (self.__class__.__name__, self.message)
 
 
 class GitException(ValidationException):
