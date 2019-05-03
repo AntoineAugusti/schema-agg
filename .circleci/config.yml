@@ -27,7 +27,7 @@ jobs:
             python main.py
 workflows:
   version: 2
-  commits:
+  commit:
     jobs:
       - fetch
   cron:
