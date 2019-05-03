@@ -120,13 +120,13 @@ for repertoire_slug, conf in config.items():
         except exceptions.ValidationException as e:
             errors.add(e)
 
-print("### Errors by slug\n")
+print("### Errors by slug ###\n")
 
 for slug, details in errors.errors_by_slug.items():
     messages = "\n".join(["  - " + repr(e) for e in details])
     print("%s:\n%s" % (slug, messages))
 
-print("### Errors by email\n")
+print("\n\n### Errors by email ###\n")
 for email, details in errors.errors_by_email.items():
     messages = "\n".join(["  - " + repr(e) for e in details])
     print("%s:\n%s" % (email, messages))
