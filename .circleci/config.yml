@@ -72,6 +72,10 @@ workflows:
       - push_data:
           requires:
             - fetch
+          filters:
+            branches:
+              only:
+                - master
   cron:
     triggers:
       - schedule:
