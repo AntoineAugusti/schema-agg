@@ -2,14 +2,6 @@ test_schema:
   url: https://github.com/AntoineAugusti/test-schema.git
   type: tableschema
   email: antoine.augusti@data.gouv.fr
-invalid:
-  url: https://github.com/AntoineAugusti/nope.git
-  type: tableschema
-  email: antoine.augusti@data.gouv.fr
-no_schema:
-  url: https://github.com/AntoineAugusti/no_schema.git
-  type: blabla
-  email: antoine.augusti@data.gouv.fr
 irve:
   url: https://github.com/etalab/schema-irve.git
   type: tableschema
