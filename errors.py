@@ -8,7 +8,7 @@ from exceptions import ValidationException
 
 
 class ErrorsCache(object):
-    CACHE_FILE = "errors.json"
+    CACHE_FILE = "cache/errors.json"
 
     def __init__(self):
         super(ErrorsCache, self).__init__()
