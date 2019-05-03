@@ -63,6 +63,9 @@ workflows:
   commit:
     jobs:
       - fetch
+      - push_data:
+          requires:
+            - fetch
   cron:
     triggers:
       - schedule:
@@ -73,3 +76,6 @@ workflows:
                 - master
     jobs:
       - fetch
+      - push_data:
+          requires:
+            - fetch
