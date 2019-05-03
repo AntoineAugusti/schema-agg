@@ -1,15 +1,44 @@
 # -*- coding: utf-8 -*-
 import os
+import json
+from copy import deepcopy
 from collections import defaultdict
+from hashlib import md5
 
 import exceptions
 from validators import TableSchemaValidator
+from notifications import EmailNotification
 
 import yaml
 import giturlparse
 from semver import VersionInfo
 from git import Repo as GitRepo
 from git.exc import GitError
+
+
+class ErrorsCache(object):
+    CACHE_FILE = "errors.json"
+
+    def __init__(self):
+        super(ErrorsCache, self).__init__()
+        with open(self.CACHE_FILE) as json_file:
+            self.errors = json.load(json_file)
+        self.new_errors = deepcopy(self.errors)
+
+    def has_new_errors(self, email, exceptions):
+        if email not in self.errors:
+            return True
+        return self.errors[email] != self.hash(exceptions)
+
+    def add_error(self, email, exceptions):
+        self.new_errors[email] = self.hash(exceptions)
+
+    def save_cache(self):
+        with open(self.CACHE_FILE, "w") as outfile:
+            json.dump(self.new_errors, outfile)
+
+    def hash(self, exceptions):
+        return md5(str(exceptions).encode("utf-8")).hexdigest()
 
 
 class ErrorBag(object):
@@ -134,5 +163,13 @@ for slug, details in errors.errors_by_slug.items():
 
 print("\n\n### Errors by email ###\n")
 for email, details in errors.errors_by_email.items():
-    messages = "\n".join(["  - " + repr(e) for e in details])
+    messages = "\n".join(["- " + repr(e) for e in details])
     print("%s:\n%s" % (email, messages))
+
+errors_cache = ErrorsCache()
+for email, details in errors.errors_by_email.items():
+    errors_cache.add_error(email, details)
+    if len(details) > 0 and errors_cache.has_new_errors(email, details):
+        EmailNotification(email, details).send()
+
+errors_cache.save_cache()

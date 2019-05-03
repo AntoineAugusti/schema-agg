@@ -10,6 +10,9 @@ jobs:
       - restore_cache:
           keys:
           - v1-dependencies-{{ checksum "requirements.txt" }}
+      - restore_cache:
+          keys:
+          - v1-errors-json
       - run:
           name: Install dependencies
           command: |
@@ -25,6 +28,11 @@ jobs:
           command: |
             . venv/bin/activate
             python main.py
+
+      - save_cache:
+          paths:
+            - errors.json
+          key: v1-errors-json
       - persist_to_workspace:
           root: .
           paths:
