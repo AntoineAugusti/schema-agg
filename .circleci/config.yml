@@ -25,6 +25,39 @@ jobs:
           command: |
             . venv/bin/activate
             python main.py
+      - persist_to_workspace:
+          root: .
+          paths:
+            - data
+  push_data:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout:
+          path: ~/repo
+      - attach_workspace:
+          at: /tmp
+      - add_ssh_keys:
+          fingerprints:
+            - "b0:df:e7:05:62:34:57:84:88:68:73:a8:0f:9e:f3:78"
+      - run:
+          name: Set Git identity
+          command: |
+            git config --global user.email "robot@circleci.com"
+            git config --global user.name "CircleCI"
+      - run:
+          name: Push to GitHub
+          command: |
+            git clone git@github.com:AntoineAugusti/schema-agg.git /tmp/schema-agg
+            cp -r /tmp/data /tmp/schema-agg/data
+            cd /tmp/schema-agg
+            if [ -n "$(git status --porcelain)" ]; then
+              git add -A data
+              git commit -am "New data at $(date -u +'%Y-%m-%dT%H:%M:%SZ') [skip ci]"
+              git push origin master
+            else
+              echo "No changes";
+            fi
 workflows:
   version: 2
   commit:
