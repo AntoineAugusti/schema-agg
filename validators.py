@@ -84,8 +84,8 @@ class TableSchemaValidator(BaseValidator):
             "author",
             "contact",
             "version",
-            "created_at",
-            "updated_at",
+            "created",
+            "updated",
             "homepage",
         ]
         for key in [k for k in keys if k not in json_data]:
