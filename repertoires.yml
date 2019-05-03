@@ -10,3 +10,7 @@ no_schema:
   url: https://github.com/AntoineAugusti/no_schema.git
   type: blabla
   email: nope@data.gouv.fr
+irve:
+  url: https://github.com/etalab/schema-irve.git
+  type: tableschema
+  email: info@data.gouv.fr
