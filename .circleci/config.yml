@@ -24,6 +24,7 @@ jobs:
           name: Fetch remote repositories
           command: |
             . venv/bin/activate
+            mkdir repos
             python main.py
       - persist_to_workspace:
           root: .
