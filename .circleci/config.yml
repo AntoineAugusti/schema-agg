@@ -54,8 +54,7 @@ jobs:
             mv /tmp/data /tmp/schema-agg/data
             cd /tmp/schema-agg
             if [ -n "$(git status --porcelain)" ]; then
-              git add -A data
-              git add -A errors.json
+              git add -A
               git commit -am "New data at $(date -u +'%Y-%m-%dT%H:%M:%SZ') [skip ci]"
               git push origin master
             else
