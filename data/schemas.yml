@@ -1,0 +1,21 @@
+AntoineAugusti/test-schema:
+  email: antoine.augusti@data.gouv.fr
+  latest_version: 0.2.0
+  title: Vacances scolaires en France
+  type: tableschema
+  versions:
+  - 0.2.0
+etalab/schema-decp-dpa:
+  email: info@data.gouv.fr
+  latest_version: 1.0.0
+  title: Spécification du fichier de déclaration de profil d'acheteur
+  type: tableschema
+  versions:
+  - 1.0.0
+etalab/schema-irve:
+  email: info@data.gouv.fr
+  latest_version: 1.0.0
+  title: Schéma IRVE
+  type: tableschema
+  versions:
+  - 1.0.0
