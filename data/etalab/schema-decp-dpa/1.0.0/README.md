@@ -1,3 +1,10 @@
+---
+homepage: https://github.com/etalab/schema-decp-dpa
+permalink: /etalab/schema-decp-dpa/1.0.0.html
+title: Spécification du fichier de déclaration de profil d'acheteur
+version: 1.0.0
+---
+
 # Déclaration des profils d'acheteur
 
 ## Contexte et références
