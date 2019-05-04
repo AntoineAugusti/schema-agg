@@ -5,6 +5,7 @@ import json
 import exceptions
 
 import tableschema
+from table_schema_to_markdown import convert_source
 import frontmatter
 
 
@@ -81,11 +82,16 @@ class TableSchemaValidator(BaseValidator):
         self.check_extra_keys()
 
     def extract(self):
+        with open(self.filepath("documentation.md"), "w") as out:
+            convert_source(self.filepath(self.SCHEMA_FILENAME), out)
+
         files = {
             self.SCHEMA_FILENAME: self.filepath_or_none(self.SCHEMA_FILENAME),
             "README.md": self.filepath_or_none("README.md"),
             "CHANGELOG.md": self.filepath_or_none("CHANGELOG.md"),
+            "documentation.md": self.filepath("documentation.md"),
         }
+
         self.move_files(files)
 
     def check_extra_keys(self):
@@ -118,10 +124,20 @@ class TableSchemaValidator(BaseValidator):
             raise exceptions.InvalidSchemaException(self.repo, message)
 
     def front_matter_for(self, filename):
+        json_data = self.schema_json_data()
         if filename == "README.md":
             version = self.repo.current_version
             permalink = "/%s/%s.html" % (self.repo.slug, version)
-            json_data = self.schema_json_data()
+
+            return {
+                "permalink": permalink,
+                "title": json_data["title"],
+                "version": version,
+                "homepage": json_data["homepage"],
+            }
+        if filename == "documentation.md":
+            version = self.repo.current_version
+            permalink = "/%s/%s/documentation.html" % (self.repo.slug, version)
 
             return {
                 "permalink": permalink,
