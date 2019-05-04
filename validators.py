@@ -1,9 +1,11 @@
 import os
 import shutil
 import json
-import tableschema
 
 import exceptions
+
+import tableschema
+import frontmatter
 
 
 class BaseValidator(object):
@@ -23,7 +25,17 @@ class BaseValidator(object):
             os.makedirs(self.target_dir)
 
         for filename, src_filepath in files.items():
-            if src_filepath is not None:
+            if src_filepath is None:
+                continue
+            front_matter = self.front_matter_for(filename)
+            # Add YAML front matter if required
+            if front_matter is not None:
+                content = frontmatter.dumps(
+                    frontmatter.load(src_filepath, **front_matter)
+                )
+                with open(self.target_filepath(filename), "w") as f:
+                    f.write(content)
+            else:
                 shutil.copyfile(src_filepath, self.target_filepath(filename))
 
     @property
@@ -52,6 +64,9 @@ class BaseValidator(object):
 
     def filepath(self, filename):
         return os.path.join(self.git_repo.working_dir, filename)
+
+    def front_matter_for(self, filename):
+        return None
 
 
 class TableSchemaValidator(BaseValidator):
@@ -105,3 +120,16 @@ class TableSchemaValidator(BaseValidator):
                 errors,
             )
             raise exceptions.InvalidSchemaException(self.repo, message)
+
+    def front_matter_for(self, filename):
+        if filename == "README.md":
+            permalink = "/%s/%s.html" % (self.repo.slug, str(self.repo.current_tag))
+            with open(self.filepath(self.SCHEMA_FILENAME)) as f:
+                json_data = json.load(f)
+            return {
+                "permalink": permalink,
+                "title": json_data["title"],
+                "version": json_data["version"],
+                "homepage": json_data["homepage"],
+            }
+        return None
