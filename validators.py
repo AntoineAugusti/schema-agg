@@ -45,8 +45,7 @@ class BaseValidator(object):
 
     @property
     def target_dir(self):
-        tag = str(self.repo.current_tag)
-        return os.path.join(self.data_dir, self.repo.slug, tag)
+        return os.path.join(self.data_dir, self.repo.slug, self.repo.current_version)
 
     def check_file_exists(self, filename):
         if not os.path.isfile(self.filepath(filename)):
@@ -79,7 +78,7 @@ class TableSchemaValidator(BaseValidator):
         super(TableSchemaValidator, self).validate()
         self.check_file_exists(self.SCHEMA_FILENAME)
         self.check_schema(self.SCHEMA_FILENAME)
-        self.check_extra_keys(self.SCHEMA_FILENAME)
+        self.check_extra_keys()
 
     def extract(self):
         files = {
@@ -89,10 +88,7 @@ class TableSchemaValidator(BaseValidator):
         }
         self.move_files(files)
 
-    def check_extra_keys(self, filename):
-        with open(self.filepath(filename)) as f:
-            json_data = json.load(f)
-
+    def check_extra_keys(self):
         keys = [
             "title",
             "description",
@@ -103,10 +99,10 @@ class TableSchemaValidator(BaseValidator):
             "updated",
             "homepage",
         ]
-        for key in [k for k in keys if k not in json_data]:
+        for key in [k for k in keys if k not in self.schema_json_data()]:
             message = "Key `%s` is a required key and is missing from %s" % (
                 key,
-                filename,
+                self.SCHEMA_FILENAME,
             )
             raise exceptions.InvalidSchemaException(self.repo, message)
 
@@ -123,13 +119,29 @@ class TableSchemaValidator(BaseValidator):
 
     def front_matter_for(self, filename):
         if filename == "README.md":
-            permalink = "/%s/%s.html" % (self.repo.slug, str(self.repo.current_tag))
-            with open(self.filepath(self.SCHEMA_FILENAME)) as f:
-                json_data = json.load(f)
+            version = self.repo.current_version
+            permalink = "/%s/%s.html" % (self.repo.slug, version)
+            json_data = self.schema_json_data()
+
             return {
                 "permalink": permalink,
                 "title": json_data["title"],
-                "version": json_data["version"],
+                "version": version,
                 "homepage": json_data["homepage"],
             }
         return None
+
+    def schema_json_data(self):
+        with open(self.filepath(self.SCHEMA_FILENAME)) as f:
+            return json.load(f)
+
+    def metadata(self):
+        json_data = self.schema_json_data()
+
+        return {
+            "slug": self.repo.slug,
+            "title": json_data["title"],
+            "type": self.repo.schema_type,
+            "email": self.repo.email,
+            "version": self.repo.current_version,
+        }

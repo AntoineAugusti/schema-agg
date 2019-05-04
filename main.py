@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+from functools import cmp_to_key
 
 import exceptions
 from validators import TableSchemaValidator
@@ -8,9 +9,34 @@ from errors import ErrorBag, ErrorsCache
 
 import yaml
 import giturlparse
-from semver import VersionInfo
+from semver import VersionInfo, cmp as SemverCmp
 from git import Repo as GitRepo
 from git.exc import GitError
+
+
+class Metadata(object):
+    def __init__(self):
+        super(Metadata, self).__init__()
+        self.data = {}
+
+    def add(self, metadata):
+        slug = metadata["slug"]
+        if slug in self.data:
+            self.data[slug]["versions"].append(metadata["version"])
+        else:
+            special_keys = ["version", "slug"]
+            self.data[slug] = {
+                k: v for k, v in metadata.items() if k not in special_keys
+            }
+            self.data[slug]["versions"] = [metadata["version"]]
+
+    def save(self):
+        for slug, data in self.data.items():
+            sorted_versions = sorted(data["versions"], key=cmp_to_key(SemverCmp))
+            self.data[slug]["latest_version"] = sorted_versions[-1]
+
+        with open("data/schemas.yml", "w") as f:
+            yaml.dump(self.data, f, allow_unicode=True)
 
 
 class Repo(object):
@@ -45,6 +71,10 @@ class Repo(object):
     @property
     def slug(self):
         return "%s/%s" % (self.owner, self.name)
+
+    @property
+    def current_version(self):
+        return str(self.current_tag)
 
     def validator(self):
         if self.schema_type == "tableschema":
@@ -95,6 +125,7 @@ errors = ErrorBag()
 with open("repertoires.yml", "r") as f:
     config = yaml.safe_load(f)
 
+metadata = Metadata()
 for repertoire_slug, conf in config.items():
     try:
         repo = Repo(conf["url"], conf["email"], conf["type"])
@@ -109,8 +140,11 @@ for repertoire_slug, conf in config.items():
             repo.checkout_tag(tag)
             repo.validator().validate()
             repo.validator().extract()
+            metadata.add(repo.validator().metadata())
         except exceptions.ValidationException as e:
             errors.add(e)
+
+metadata.save()
 
 print("### Errors by slug ###\n")
 
