@@ -143,25 +143,38 @@ class TableSchemaValidator(BaseValidator):
             raise exceptions.InvalidSchemaException(self.repo, message)
 
     def front_matter_for(self, filename):
+        version = self.repo.current_version
+        slug = self.repo.slug
+
         if filename == "README.md":
-            version = self.repo.current_version
-            permalink = "/%s/%s.html" % (self.repo.slug, version)
+            if self.is_latest_version():
+                permalink = "/%s/%s.html" % (slug, "latest")
+                redirect_from = "/%s/%s/documentation.html" % (slug, version)
+            else:
+                permalink = "/%s/%s.html" % (slug, version)
+                redirect_from = None
 
             return {
                 "permalink": permalink,
                 "title": self.schema_json_data()["title"],
                 "version": version,
                 "homepage": self.schema_json_data()["homepage"],
+                "redirect_from": redirect_from,
             }
         if filename == "documentation.md":
-            version = self.repo.current_version
-            permalink = "/%s/%s/documentation.html" % (self.repo.slug, version)
+            if self.is_latest_version():
+                permalink = "/%s/%s/documentation.html" % (slug, "latest")
+                redirect_from = "/%s/%s/documentation.html" % (slug, version)
+            else:
+                permalink = "/%s/%s/documentation.html" % (slug, version)
+                redirect_from = None
 
             return {
                 "permalink": permalink,
                 "title": self.schema_json_data()["title"],
                 "version": version,
                 "homepage": self.schema_json_data()["homepage"],
+                "redirect_from": redirect_from,
             }
         return None
 
