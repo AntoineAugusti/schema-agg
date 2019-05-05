@@ -15,6 +15,19 @@ class BaseValidator(object):
         self.repo = repo
         self.git_repo = repo.git_repo
 
+    @property
+    def data_dir(self):
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        return os.path.join(current_dir, "data")
+
+    @property
+    def target_dir(self):
+        return os.path.join(self.data_dir, self.repo.slug, self.repo.current_version)
+
+    @property
+    def target_latest_dir(self):
+        return os.path.join(self.data_dir, self.repo.slug, "latest")
+
     def validate(self):
         self.check_file_exists("README.md")
 
@@ -39,14 +52,13 @@ class BaseValidator(object):
             else:
                 shutil.copyfile(src_filepath, self.target_filepath(filename))
 
-    @property
-    def data_dir(self):
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        return os.path.join(current_dir, "data")
-
-    @property
-    def target_dir(self):
-        return os.path.join(self.data_dir, self.repo.slug, self.repo.current_version)
+        if self.is_latest_version():
+            if not os.path.exists(self.target_latest_dir):
+                os.makedirs(self.target_latest_dir)
+            shutil.copyfile(
+                self.filepath(self.SCHEMA_FILENAME),
+                self.target_latest_filepath(self.SCHEMA_FILENAME),
+            )
 
     def check_file_exists(self, filename):
         if not os.path.isfile(self.filepath(filename)):
@@ -62,11 +74,17 @@ class BaseValidator(object):
     def target_filepath(self, filename):
         return os.path.join(self.target_dir, filename)
 
+    def target_latest_filepath(self, filename):
+        return os.path.join(self.target_latest_dir, filename)
+
     def filepath(self, filename):
         return os.path.join(self.git_repo.working_dir, filename)
 
     def front_matter_for(self, filename):
         return None
+
+    def is_latest_version(self):
+        return self.repo.current_tag == self.repo.latest_tag()
 
 
 class TableSchemaValidator(BaseValidator):

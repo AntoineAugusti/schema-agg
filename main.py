@@ -96,7 +96,11 @@ class Repo(object):
     def tags(self):
         if self.git_repo is None or len(self.git_repo.tags) == 0:
             raise exceptions.NoTagsException(self, "Cannot found tags")
-        return [self.parse_version(t.name) for t in self.git_repo.tags]
+        versions = [self.parse_version(t.name) for t in self.git_repo.tags]
+        return sorted(versions, key=cmp_to_key(SemverCmp))
+
+    def latest_tag(self):
+        return self.tags()[-1]
 
     def checkout_tag(self, tag):
         try:
