@@ -10,6 +10,8 @@ import frontmatter
 
 
 class BaseValidator(object):
+    CHANGELOG_FILENAME = "CHANGELOG.md"
+
     def __init__(self, repo):
         super(BaseValidator, self).__init__()
         self.repo = repo
@@ -93,6 +95,7 @@ class TableSchemaValidator(BaseValidator):
     def __init__(self, repo):
         super(TableSchemaValidator, self).__init__(repo)
         self.schema_data = None
+        self.has_changelog = False
 
     def validate(self):
         super(TableSchemaValidator, self).validate()
@@ -107,9 +110,13 @@ class TableSchemaValidator(BaseValidator):
         files = {
             self.SCHEMA_FILENAME: self.filepath_or_none(self.SCHEMA_FILENAME),
             "README.md": self.filepath_or_none("README.md"),
-            "CHANGELOG.md": self.filepath_or_none("CHANGELOG.md"),
             "documentation.md": self.filepath("documentation.md"),
         }
+
+        if self.is_latest_version():
+            files[self.CHANGELOG_FILENAME] = self.filepath_or_none(
+                self.CHANGELOG_FILENAME
+            )
 
         self.move_files(files)
 
@@ -176,6 +183,20 @@ class TableSchemaValidator(BaseValidator):
                 "homepage": self.schema_json_data()["homepage"],
                 "redirect_from": redirect_from,
             }
+        if filename == self.CHANGELOG_FILENAME:
+            if not self.is_latest_version():
+                raise ValueError
+            self.has_changelog = True
+            permalink = "/%s/%s/changelog.html" % (slug, "latest")
+            redirect_from = "/%s/%s/changelog.html" % (slug, version)
+
+            return {
+                "permalink": permalink,
+                "title": "CHANGELOG de " + self.schema_json_data()["title"],
+                "version": version,
+                "homepage": self.schema_json_data()["homepage"],
+                "redirect_from": redirect_from,
+            }
         return None
 
     def schema_json_data(self):
@@ -187,11 +208,11 @@ class TableSchemaValidator(BaseValidator):
         return self.schema_data
 
     def metadata(self):
-
         return {
             "slug": self.repo.slug,
             "title": self.schema_json_data()["title"],
             "type": self.repo.schema_type,
             "email": self.repo.email,
             "version": self.repo.current_version,
+            "has_changelog": self.has_changelog,
         }

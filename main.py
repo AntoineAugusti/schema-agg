@@ -23,6 +23,7 @@ class Metadata(object):
         slug = metadata["slug"]
         if slug in self.data:
             self.data[slug]["versions"].append(metadata["version"])
+            self.data[slug]["has_changelog"] = metadata["has_changelog"]
         else:
             special_keys = ["version", "slug"]
             self.data[slug] = {
@@ -142,9 +143,10 @@ for repertoire_slug, conf in config.items():
     for tag in tags:
         try:
             repo.checkout_tag(tag)
-            repo.validator().validate()
-            repo.validator().extract()
-            metadata.add(repo.validator().metadata())
+            validator = repo.validator()
+            validator.validate()
+            validator.extract()
+            metadata.add(validator.metadata())
         except exceptions.ValidationException as e:
             errors.add(e)
 
