@@ -1,6 +1,7 @@
 ---
 homepage: https://github.com/etalab/schema-irve
-permalink: /etalab/schema-irve/1.0.0/documentation.html
+permalink: /etalab/schema-irve/latest/documentation.html
+redirect_from: /etalab/schema-irve/1.0.0/documentation.html
 title: Schéma IRVE
 version: 1.0.0
 ---
