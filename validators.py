@@ -149,7 +149,7 @@ class TableSchemaValidator(BaseValidator):
         if filename == "README.md":
             if self.is_latest_version():
                 permalink = "/%s/%s.html" % (slug, "latest")
-                redirect_from = "/%s/%s/documentation.html" % (slug, version)
+                redirect_from = "/%s/%s.html" % (slug, version)
             else:
                 permalink = "/%s/%s.html" % (slug, version)
                 redirect_from = None
