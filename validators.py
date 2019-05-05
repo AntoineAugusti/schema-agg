@@ -92,6 +92,7 @@ class TableSchemaValidator(BaseValidator):
 
     def __init__(self, repo):
         super(TableSchemaValidator, self).__init__(repo)
+        self.schema_data = None
 
     def validate(self):
         super(TableSchemaValidator, self).validate()
@@ -142,16 +143,15 @@ class TableSchemaValidator(BaseValidator):
             raise exceptions.InvalidSchemaException(self.repo, message)
 
     def front_matter_for(self, filename):
-        json_data = self.schema_json_data()
         if filename == "README.md":
             version = self.repo.current_version
             permalink = "/%s/%s.html" % (self.repo.slug, version)
 
             return {
                 "permalink": permalink,
-                "title": json_data["title"],
+                "title": self.schema_json_data()["title"],
                 "version": version,
-                "homepage": json_data["homepage"],
+                "homepage": self.schema_json_data()["homepage"],
             }
         if filename == "documentation.md":
             version = self.repo.current_version
@@ -159,22 +159,25 @@ class TableSchemaValidator(BaseValidator):
 
             return {
                 "permalink": permalink,
-                "title": json_data["title"],
+                "title": self.schema_json_data()["title"],
                 "version": version,
-                "homepage": json_data["homepage"],
+                "homepage": self.schema_json_data()["homepage"],
             }
         return None
 
     def schema_json_data(self):
+        if self.schema_data is not None:
+            return self.schema_data
+
         with open(self.filepath(self.SCHEMA_FILENAME)) as f:
-            return json.load(f)
+            self.schema_data = json.load(f)
+        return self.schema_data
 
     def metadata(self):
-        json_data = self.schema_json_data()
 
         return {
             "slug": self.repo.slug,
-            "title": json_data["title"],
+            "title": self.schema_json_data()["title"],
             "type": self.repo.schema_type,
             "email": self.repo.email,
             "version": self.repo.current_version,
