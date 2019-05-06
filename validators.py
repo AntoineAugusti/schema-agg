@@ -113,6 +113,8 @@ class TableSchemaValidator(BaseValidator):
         files = {
             self.SCHEMA_FILENAME: self.filepath_or_none(self.SCHEMA_FILENAME),
             "README.md": self.filepath_or_none("README.md"),
+            "SEE_ALSO.md": self.filepath_or_none("SEE_ALSO.md"),
+            "CONTEXT.md": self.filepath_or_none("CONTEXT.md"),
             "documentation.md": self.filepath("documentation.md"),
         }
 
