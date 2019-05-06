@@ -88,7 +88,8 @@ class BaseValidator(object):
         return None
 
     def is_latest_version(self):
-        return self.repo.current_tag == self.repo.latest_tag()
+
+        return self.repo.current_tag == self.repo.latest_valid_tag()
 
 
 class TableSchemaValidator(BaseValidator):

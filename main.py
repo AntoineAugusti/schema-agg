@@ -52,6 +52,7 @@ class Repo(object):
         self.email = email
         self.git_repo = None
         self.current_tag = None
+        self.cache_latest_valid_tag = None
         if schema_type not in self.SCHEMA_TYPES:
             raise exceptions.InvalidSchemaTypeException(
                 self,
@@ -100,8 +101,19 @@ class Repo(object):
         versions = [self.parse_version(t.name) for t in self.git_repo.tags]
         return sorted(versions, key=cmp_to_key(SemverCmp))
 
-    def latest_tag(self):
-        return self.tags()[-1]
+    def latest_valid_tag(self):
+        if self.cache_latest_valid_tag is not None:
+            return self.cache_latest_valid_tag
+        previous_tag = self.current_tag
+        for tag in self.tags():
+            try:
+                self.checkout_tag(tag)
+                self.validator().validate()
+                self.cache_latest_valid_tag = tag
+            except exceptions.ValidationException:
+                continue
+        self.checkout_tag(previous_tag)
+        return self.cache_latest_valid_tag
 
     def checkout_tag(self, tag):
         try:
