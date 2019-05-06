@@ -17,9 +17,10 @@ etalab/schema-decp-dpa:
   - 1.0.0
 etalab/schema-irve:
   email: info@data.gouv.fr
-  has_changelog: false
-  latest_version: 1.0.0
+  has_changelog: true
+  latest_version: 1.0.1
   title: Schéma IRVE
   type: tableschema
   versions:
   - 1.0.0
+  - 1.0.1

@@ -1,12 +1,10 @@
 ---
 homepage: https://github.com/etalab/schema-irve
-permalink: /etalab/schema-irve/1.0.0.html
-redirect_from: null
-title: Schéma IRVE
-version: 1.0.0
+permalink: /etalab/schema-irve/latest.html
+redirect_from: /etalab/schema-irve/1.0.1.html
+title: Infrastructures de recharge de véhicules électriques
+version: 1.0.1
 ---
-
-> WIP - Work In Progress
 
 # Infrastructures de recharge pour véhicules électriques
 
@@ -19,7 +17,7 @@ version: 1.0.0
 
 ## Schéma
 
-Schéma au format [TableSchema](https://frictionlessdata.io/specs/table-schema) disponible [ici](https://github.com/etalab/schema.data.gouv.fr/blob/master/irve/schema.json).
+Schéma au format [TableSchema](https://frictionlessdata.io/specs/table-schema) disponible [ici](https://github.com/etalab/schema-irve/blob/master/schema.json).
 
 ## Validation
 
@@ -27,4 +25,4 @@ Cf https://github.com/etalab/schema.data.gouv.fr#comment-valider-un-fichier
 
 ## Consolidation
 
-Etalab réalise une consolidation des jeux de données IRVE déposés sur data.gouv.fr. Le code est [disponible ici](https://github.com/etalab/schema.data.gouv.fr/tree/master/irve/aggregration). Le fichier en résultant est [publié ici sur data.gouv.fr](https://www.data.gouv.fr/fr/datasets/5448d3e0c751df01f85d0572).
+Etalab réalise une consolidation des jeux de données IRVE déposés sur data.gouv.fr. Le code est [disponible ici](https://github.com/etalab/schema-irve/tree/master/aggregration). Le fichier en résultant est [publié ici sur data.gouv.fr](https://www.data.gouv.fr/fr/datasets/5448d3e0c751df01f85d0572).
