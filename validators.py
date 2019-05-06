@@ -40,6 +40,9 @@ class BaseValidator(object):
         if not os.path.exists(self.target_dir):
             os.makedirs(self.target_dir)
 
+        if not os.path.exists(self.target_latest_dir):
+            os.makedirs(self.target_latest_dir)
+
         for filename, src_filepath in files.items():
             if src_filepath is None:
                 continue
@@ -54,13 +57,12 @@ class BaseValidator(object):
             else:
                 shutil.copyfile(src_filepath, self.target_filepath(filename))
 
-        if self.is_latest_version():
-            if not os.path.exists(self.target_latest_dir):
-                os.makedirs(self.target_latest_dir)
-            shutil.copyfile(
-                self.filepath(self.SCHEMA_FILENAME),
-                self.target_latest_filepath(self.SCHEMA_FILENAME),
-            )
+        # Always copy schema to latest directory since versions
+        # are sorted
+        shutil.copyfile(
+            self.filepath(self.SCHEMA_FILENAME),
+            self.target_latest_filepath(self.SCHEMA_FILENAME),
+        )
 
     def check_file_exists(self, filename):
         if not os.path.isfile(self.filepath(filename)):
