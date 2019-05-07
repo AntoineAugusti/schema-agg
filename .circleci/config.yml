@@ -34,6 +34,7 @@ jobs:
           root: .
           paths:
             - data
+            - cache
   push_data:
     docker:
       - image: circleci/python:3.7
@@ -55,7 +56,9 @@ jobs:
           command: |
             git clone git@github.com:AntoineAugusti/schema-agg.git /tmp/schema-agg
             rm -rf /tmp/schema-agg/data
+            rm -rf /tmp/schema-agg/cache
             mv /tmp/data /tmp/schema-agg/data
+            mv /tmp/cache /tmp/schema-agg/cache
             cd /tmp/schema-agg
             if [ -n "$(git status --porcelain)" ]; then
               git add -A
