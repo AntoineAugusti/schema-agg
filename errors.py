@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import datetime
 from copy import deepcopy
 from collections import defaultdict
 from hashlib import md5
@@ -9,6 +10,7 @@ from exceptions import ValidationException
 
 class ErrorsCache(object):
     CACHE_FILE = "cache/errors.json"
+    TIME_DIFFERENCE_REPEAT_NOTIFICATION = datetime.timedelta(hours=48)
 
     def __init__(self):
         super(ErrorsCache, self).__init__()
@@ -16,13 +18,31 @@ class ErrorsCache(object):
             self.errors = json.load(json_file)
         self.new_errors = deepcopy(self.errors)
 
-    def has_new_errors(self, email, exceptions):
+    def should_send_notification(self, email, exceptions):
         if email not in self.errors:
             return True
-        return self.errors[email] != self.hash(exceptions)
+        time_difference = datetime.datetime.utcnow() - datetime.datetime.fromisoformat(
+            self.errors[email]["last_error"]
+        )
+        too_old = time_difference >= self.TIME_DIFFERENCE_REPEAT_NOTIFICATION
+        should_warn = self.is_new_error(email, exceptions) or too_old
+        if should_warn:
+            self.set_error_time(email)
+        return should_warn
+
+    def is_new_error(self, email, exceptions):
+        if email not in self.errors:
+            return True
+        return self.errors[email]["hash"] != self.new_errors[email]["hash"]
 
     def add_error(self, email, exceptions):
-        self.new_errors[email] = self.hash(exceptions)
+        if email not in self.new_errors:
+            self.new_errors[email] = {"hash": self.hash(exceptions)}
+        else:
+            self.new_errors[email]["hash"] = self.hash(exceptions)
+
+    def set_error_time(self, email):
+        self.new_errors[email]["last_error"] = datetime.datetime.utcnow().isoformat()
 
     def save_cache(self):
         with open(self.CACHE_FILE, "w") as outfile:

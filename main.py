@@ -209,7 +209,7 @@ for email, details in errors.errors_by_email.items():
 errors_cache = ErrorsCache()
 for email, details in errors.errors_by_email.items():
     errors_cache.add_error(email, details)
-    if len(details) > 0 and errors_cache.has_new_errors(email, details):
+    if len(details) > 0 and errors_cache.should_send_notification(email, details):
         EmailNotification(email, details).send()
 
 errors_cache.save_cache()
