@@ -8,6 +8,7 @@ from notifications import EmailNotification
 from errors import ErrorBag, ErrorsCache
 
 import yaml
+import toml
 import giturlparse
 from semver import VersionInfo, cmp as SemverCmp
 from git import Repo as GitRepo
@@ -15,6 +16,8 @@ from git.exc import GitError
 
 
 class Metadata(object):
+    BASE_DOMAIN = "https://schema-datagouv.antoine-augusti.fr"
+
     def __init__(self):
         super(Metadata, self).__init__()
         self.data = {}
@@ -31,13 +34,41 @@ class Metadata(object):
             }
             self.data[slug]["versions"] = [metadata["version"]]
 
-    def save(self):
+    def schema_url(self, slug):
+        details = self.get()[slug]
+        if details["type"] not in Repo.SCHEMA_TYPES:
+            raise NotImplementedError
+        return {
+            "tableschema": "%s/schemas/%s/latest/%s"
+            % (self.BASE_DOMAIN, slug, TableSchemaValidator.SCHEMA_FILENAME)
+        }[details["type"]]
+
+    def get(self):
         for slug, data in self.data.items():
             sorted_versions = sorted(data["versions"], key=cmp_to_key(SemverCmp))
             self.data[slug]["latest_version"] = sorted_versions[-1]
+        return self.data
 
+    def save_schemas(self):
+        # Save in YAML
         with open("data/schemas.yml", "w") as f:
-            yaml.dump(self.data, f, allow_unicode=True)
+            yaml.dump(self.get(), f, allow_unicode=True)
+
+        # Save in TOML
+        with open("data/schemas.toml", "w") as f:
+            toml.dump(self.generate_toml(), f)
+
+    def generate_toml(self):
+        toml_data = {}
+        for slug, details in self.data.items():
+            toml_data[slug] = {
+                "title": details["title"],
+                "description": details["description"],
+                "version": details["latest_version"],
+                "doc_url": "https://schema.data.gouv.fr/%s/latest.html" % slug,
+                "schema": self.schema_url(slug),
+            }
+        return toml_data
 
 
 class Repo(object):
@@ -162,7 +193,7 @@ for repertoire_slug, conf in config.items():
         except exceptions.ValidationException as e:
             errors.add(e)
 
-metadata.save()
+metadata.save_schemas()
 
 print("### Errors by slug ###\n")
 

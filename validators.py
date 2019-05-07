@@ -216,6 +216,7 @@ class TableSchemaValidator(BaseValidator):
         return {
             "slug": self.repo.slug,
             "title": self.schema_json_data()["title"],
+            "description": self.schema_json_data()["description"],
             "type": self.repo.schema_type,
             "email": self.repo.email,
             "version": self.repo.current_version,
