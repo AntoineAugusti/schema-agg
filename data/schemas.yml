@@ -1,4 +1,5 @@
 AntoineAugusti/test-schema:
+  description: description!
   email: antoine.augusti@data.gouv.fr
   has_changelog: true
   latest_version: 0.4.0
@@ -8,6 +9,7 @@ AntoineAugusti/test-schema:
   - 0.2.0
   - 0.4.0
 etalab/schema-decp-dpa:
+  description: Spécification du fichier de déclaration de profil d'acheteur
   email: info@data.gouv.fr
   has_changelog: false
   latest_version: 1.0.0
@@ -16,6 +18,9 @@ etalab/schema-decp-dpa:
   versions:
   - 1.0.0
 etalab/schema-irve:
+  description: Spécification du fichier d'échange relatif aux données concernant la
+    localisation géographique et les caractéristiques techniques des stations et des
+    points de recharge pour véhicules électriques
   email: info@data.gouv.fr
   has_changelog: true
   latest_version: 1.0.1
